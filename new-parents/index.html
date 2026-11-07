@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Parents</title>
+    <meta name="theme-color" content="#f43f5e">
+    <meta name="description" content="New Parents - Buku KIA Digital, monitoring tumbuh kembang anak">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="New Parents">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        girlPrimary: '#f43f5e',
+                        girlLight: '#ffe4e6',
+                        boyPrimary: '#6366f1',
+                        boyLight: '#e0e7ff',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        /* FIX: tab yang tidak aktif harus benar-benar tersembunyi (sebelumnya kalah oleh class Tailwind "flex",
+           sehingga menu Jurnal + tombol "Tambah Jurnal Baru" ikut muncul di semua menu) */
+        .tab-content:not(.active) { display: none !important; }
+        .tab-content.active { display: block; }
+        #tab-catatan.active { display: flex; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .theme-bg { transition: background-color 0.3s ease; }
+        .theme-text { transition: color 0.3s ease; }
+        .theme-border { transition: border-color 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen" id="appBody">
+
+    <!-- Main Container -->
+    <div class="max-w-md mx-auto w-full bg-white min-h-screen shadow-xl flex flex-col relative pb-24">
+
+        <!-- HEADER -->
+        <header id="appHeader" class="theme-bg text-white p-6 rounded-b-3xl shadow-md transition-colors duration-300">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <span class="bg-white/20 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">New Parents</span>
+                    <h1 id="childNameHeader" class="text-xl font-bold mt-2 truncate max-w-[200px]">Roxanne Mikayla</h1>
+                </div>
+                <button onclick="switchTab('profil')" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition" title="Edit Profil">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between border border-white/20">
+                <div class="flex items-center space-x-3">
+                    <div id="genderIconContainer" class="bg-white p-3 rounded-full shadow-sm">
+                        <i data-lucide="baby" class="w-6 h-6" id="genderIcon"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-white/80">Usia Saat Ini</p>
+                        <p id="childAgeDisplay" class="text-lg font-bold">Memuat...</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 p-4">
+
+            <!-- TAB 1: PROFIL ANAK -->
+            <section id="tab-profil" class="tab-content space-y-4">
+                <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i data-lucide="settings" class="w-5 h-5 theme-text"></i> Pengaturan Profil
+                    </h3>
+                    <form onsubmit="saveProfile(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap Anak</label>
+                            <input type="text" id="profName" required class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 theme-ring">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Lahir</label>
+                            <input type="date" id="profDOB" required class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 theme-ring">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Jenis Kelamin</label>
+                            <select id="profGender" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 theme-ring">
+                                <option value="Perempuan">Perempuan</option>
+                                <option value="Laki-laki">Laki-laki</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-sm transition shadow-sm hover:opacity-90">
+                            Simpan Profil
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- TAB 2: KMS & PERTUMBUHAN -->
+            <section id="tab-kms" class="tab-content active space-y-5">
+                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-5 h-5 theme-text"></i> Catat Pengukuran
+                    </h3>
+                    <form id="growthForm" onsubmit="saveGrowthRecord(event)" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal</label>
+                                <input type="date" id="inputDateKMS" required class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 theme-ring">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">BB (kg)</label>
+                                <input type="number" step="0.1" id="inputBB" required class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 theme-ring">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">TB (cm)</label>
+                                <input type="number" step="0.1" id="inputTB" required class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 theme-ring">
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="w-full theme-bg text-white font-semibold py-2 rounded-xl text-sm transition shadow-sm hover:opacity-90">
+                                    Simpan
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="history" class="w-5 h-5 theme-text"></i> Riwayat KMS
+                        </h3>
+                    </div>
+                    <div class="space-y-3" id="growthListContainer"></div>
+                </div>
+            </section>
+
+            <!-- TAB 3: MILESTONE DENVER II -->
+            <section id="tab-milestone" class="tab-content space-y-4">
+                <div class="theme-light-bg rounded-2xl p-4 mb-4">
+                    <h3 class="font-bold theme-text text-sm mb-1">Milestone Perkembangan</h3>
+                    <p class="text-xs text-slate-600">Checklist pencapaian sesuai rentang usia (adaptasi Denver II).</p>
+                </div>
+
+                <div class="flex space-x-2 overflow-x-auto no-scrollbar py-1">
+                    <button onclick="switchMilestoneTab('0-3')" id="btn-ms-0-3" class="ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">0-3 Bln</button>
+                    <button onclick="switchMilestoneTab('3-6')" id="btn-ms-3-6" class="ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">3-6 Bln</button>
+                    <button onclick="switchMilestoneTab('6-12')" id="btn-ms-6-12" class="ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">6-12 Bln</button>
+                    <button onclick="switchMilestoneTab('1-2')" id="btn-ms-1-2" class="ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">1-2 Thn</button>
+                    <button onclick="switchMilestoneTab('2-3')" id="btn-ms-2-3" class="ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">2-3 Thn</button>
+                    <button onclick="switchMilestoneTab('3-5')" id="btn-ms-3-5" class="ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">3-5 Thn</button>
+                </div>
+
+                <div id="milestoneContentContainer" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3"></div>
+            </section>
+
+            <!-- TAB 4: VAKSIN -->
+            <section id="tab-vaksin" class="tab-content space-y-6">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-emerald-500"></i> Vaksin Wajib
+                    </h3>
+                    <div id="vaccineWajibContainer" class="space-y-3"></div>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <i data-lucide="shield-plus" class="w-5 h-5 text-blue-500"></i> Vaksin Tambahan
+                    </h3>
+                    <div id="vaccineTambahanContainer" class="space-y-3"></div>
+                </div>
+            </section>
+
+            <!-- TAB 5: MPASI -->
+            <section id="tab-mpasi" class="tab-content space-y-4">
+                <div class="theme-light-bg rounded-2xl p-4">
+                    <h3 class="font-bold theme-text text-sm mb-1">Panduan MPASI</h3>
+                    <p class="text-xs text-slate-600">Pilih usia untuk melihat tekstur, porsi, dan contoh menu 7 hari.</p>
+                </div>
+
+                <!-- Pilihan bulan -->
+                <div class="flex space-x-2 overflow-x-auto no-scrollbar py-1">
+                    <button onclick="switchMpasiTab('6')" id="btn-mp-6" class="mp-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">6 Bulan</button>
+                    <button onclick="switchMpasiTab('7-8')" id="btn-mp-7-8" class="mp-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">7-8 Bulan</button>
+                    <button onclick="switchMpasiTab('9-11')" id="btn-mp-9-11" class="mp-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">9-11 Bulan</button>
+                    <button onclick="switchMpasiTab('12')" id="btn-mp-12" class="mp-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600">12+ Bulan</button>
+                </div>
+
+                <div id="mpasiCardsContainer" class="space-y-4"></div>
+            </section>
+
+            <!-- TAB 6: LIST KATA -->
+            <section id="tab-kata" class="tab-content space-y-4">
+                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5 theme-text"></i> Kosakata Anak
+                    </h3>
+                    <form onsubmit="saveWord(event)" class="space-y-3">
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <input type="text" id="inputWord" placeholder="Kata baru diucapkan..." required class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 theme-ring">
+                            </div>
+                            <div class="w-32">
+                                <input type="date" id="inputWordDate" required class="w-full text-sm border border-slate-200 rounded-xl px-2 py-2.5 focus:outline-none focus:ring-2 theme-ring">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full theme-bg text-white font-semibold py-2 rounded-xl text-sm transition hover:opacity-90">
+                            Simpan Kata
+                        </button>
+                    </form>
+                </div>
+                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+                    <h4 class="text-sm font-bold text-slate-800 mb-3">Daftar Kata Tersimpan</h4>
+                    <div id="wordListContainer" class="space-y-2 max-h-[300px] overflow-y-auto"></div>
+                </div>
+            </section>
+
+            <!-- TAB 7: CATATAN IBU -->
+            <section id="tab-catatan" class="tab-content flex-col relative">
+
+                <!-- LIST VIEW -->
+                <div id="jurnalListView" class="flex flex-col space-y-4">
+                    <button onclick="showAddNoteForm()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-sm transition shadow-sm hover:opacity-90 flex items-center justify-center gap-2">
+                        <i data-lucide="plus" class="w-5 h-5"></i> Tambah Jurnal Baru
+                    </button>
+                    <div id="jurnalListContainer" class="space-y-3 pb-10"></div>
+                </div>
+
+                <!-- FORM VIEW -->
+                <div id="jurnalFormView" class="hidden bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex-col min-h-[400px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-base font-bold text-slate-800">Tulis Jurnal</h3>
+                        <button onclick="backToNotesList()" class="text-slate-500 text-sm font-medium">Batal</button>
+                    </div>
+                    <input type="text" id="jurnalTitle" placeholder="Judul Jurnal..." class="w-full text-sm font-bold border-b border-slate-200 px-2 py-2 focus:outline-none mb-3 theme-text">
+                    <textarea id="jurnalContent" placeholder="Ceritakan perkembangan si kecil hari ini..." class="w-full flex-1 text-sm border-none p-2 focus:outline-none resize-none"></textarea>
+                    <button onclick="saveJurnal()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-sm transition mt-3">Simpan Catatan</button>
+                </div>
+
+                <!-- DETAIL VIEW -->
+                <div id="jurnalDetailView" class="hidden bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex-col min-h-[400px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <button onclick="backToNotesList()" class="text-slate-500 flex items-center gap-1 text-sm hover:text-slate-700 transition">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
+                        </button>
+                        <button id="jurnalDetailDeleteBtn" class="text-rose-500 hover:text-rose-600 transition" title="Hapus Jurnal">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <h3 id="jurnalDetailTitle" class="text-lg font-bold text-slate-800 mb-1 theme-text"></h3>
+                    <p id="jurnalDetailDate" class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100"></p>
+                    <div id="jurnalDetailContent" class="text-sm text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed"></div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- BOTTOM NAVIGATION (fixed: selalu menempel di bawah layar saat scroll) -->
+        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-slate-200 px-2 py-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] rounded-t-2xl z-40 overflow-hidden">
+            <div class="flex overflow-x-auto space-x-6 px-2 pb-1 pt-1 no-scrollbar items-center snap-x snap-mandatory">
+                <button onclick="switchTab('kms')" id="nav-kms" class="nav-btn flex flex-col items-center min-w-[60px] snap-center theme-text">
+                    <i data-lucide="line-chart" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] font-semibold">KMS</span>
+                </button>
+                <button onclick="switchTab('milestone')" id="nav-milestone" class="nav-btn flex flex-col items-center min-w-[60px] snap-center text-slate-400">
+                    <i data-lucide="check-square" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] font-medium">Milestone</span>
+                </button>
+                <button onclick="switchTab('vaksin')" id="nav-vaksin" class="nav-btn flex flex-col items-center min-w-[60px] snap-center text-slate-400">
+                    <i data-lucide="syringe" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] font-medium">Vaksin</span>
+                </button>
+                <button onclick="switchTab('mpasi')" id="nav-mpasi" class="nav-btn flex flex-col items-center min-w-[60px] snap-center text-slate-400">
+                    <i data-lucide="utensils" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] font-medium">MPASI</span>
+                </button>
+                <button onclick="switchTab('kata')" id="nav-kata" class="nav-btn flex flex-col items-center min-w-[60px] snap-center text-slate-400">
+                    <i data-lucide="message-circle" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] font-medium">Kosakata</span>
+                </button>
+                <button onclick="switchTab('catatan')" id="nav-catatan" class="nav-btn flex flex-col items-center min-w-[60px] snap-center text-slate-400">
+                    <i data-lucide="book-heart" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] font-medium">Jurnal</span>
+                </button>
+                <button onclick="switchTab('profil')" id="nav-profil" class="nav-btn flex flex-col items-center min-w-[60px] snap-center text-slate-400">
+                    <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] font-medium">Profil</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toastMessage" class="fixed top-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-medium z-50 transition-all duration-300 opacity-0 pointer-events-none">
+        Pesan
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        // --- DATA DEFAULTS & INITIALIZATION ---
+        const DEFAULT_CHILD = { name: "Roxanne Mikayla Princy", dob: "2026-05-12", gender: "Perempuan" };
+
+        const MILESTONES_DATA = {
+            "0-3": [
+                {id: "m1", text: "Menatap wajah (Sosial)"}, {id: "m2", text: "Tersenyum spontan (Sosial)"},
+                {id: "m3", text: "Mengangkat kepala 45° (Motorik Kasar)"}, {id: "m4", text: "Bersuara ooh/aah (Bahasa)"}
+            ],
+            "3-6": [
+                {id: "m5", text: "Tengkurap sendiri (Motorik Kasar)"}, {id: "m6", text: "Meraih mainan (Motorik Halus)"},
+                {id: "m7", text: "Tertawa keras (Bahasa)"}, {id: "m8", text: "Menoleh ke sumber suara (Bahasa)"}
+            ],
+            "6-12": [
+                {id: "m9", text: "Duduk tanpa pegangan (Motorik Kasar)"}, {id: "m10", text: "Mengambil benda kecil / menjimpit (Motorik Halus)"},
+                {id: "m11", text: "Mengucapkan mama/papa spesifik (Bahasa)"}, {id: "m12", text: "Bermain cilukba (Sosial)"}
+            ],
+            "1-2": [
+                {id: "m13", text: "Berdiri sendiri (Motorik Kasar)"}, {id: "m14", text: "Berjalan dengan baik (Motorik Kasar)"},
+                {id: "m15", text: "Mengucapkan 3-6 kata (Bahasa)"}, {id: "m16", text: "Minum dari cangkir (Motorik Halus)"}
+            ],
+            "2-3": [
+                {id: "m17", text: "Melompat (Motorik Kasar)"}, {id: "m18", text: "Menyusun menara 6 balok (Motorik Halus)"},
+                {id: "m19", text: "Menggabungkan kata (Bahasa)"}, {id: "m20", text: "Melepas pakaian sendiri (Sosial)"}
+            ],
+            "3-5": [
+                {id: "m21", text: "Berdiri 1 kaki (Motorik Kasar)"}, {id: "m22", text: "Menggambar orang (Motorik Halus)"},
+                {id: "m23", text: "Bicara dapat dimengerti (Bahasa)"}, {id: "m24", text: "Berpakaian tanpa bantuan (Sosial)"}
+            ]
+        };
+
+        const VAKSIN_WAJIB_DATA = [
+            { id: "vw1", age: "0 Bln", name: "Hepatitis B (HB-0)" },
+            { id: "vw2", age: "1 Bln", name: "BCG & Polio 1" },
+            { id: "vw3", age: "2 Bln", name: "DPT-HB-Hib 1, Polio 2, PCV 1" },
+            { id: "vw4", age: "3 Bln", name: "DPT-HB-Hib 2, Polio 3, PCV 2" },
+            { id: "vw5", age: "4 Bln", name: "DPT-HB-Hib 3, Polio 4, IPV" },
+            { id: "vw6", age: "9 Bln", name: "Campak / MR" }
+        ];
+
+        const VAKSIN_TAMBAHAN_DATA = [
+            { id: "vt1", age: "2-6 Bln", name: "Rotavirus" },
+            { id: "vt2", age: "6+ Bln", name: "Influenza (Tahunan)" },
+            { id: "vt3", age: "12-18 Bln", name: "PCV 3 & Varicella" },
+            { id: "vt4", age: "15-18 Bln", name: "MMR" }
+        ];
+
+        // --- MPASI: info per usia + menu 7 hari ---
+        const MPASI_DATA = {
+            "6": {
+                age: "6 Bulan", texture: "Saring halus (Puree)",
+                desc: "Mulai dengan 2-3 sdm, 2x sehari. ASI tetap menjadi makanan utama.",
+                labels: ["Makan 1", "Makan 2"],
+                menu: [
+                    ["Bubur beras saring + hati ayam + 1 sdt minyak/margarin", "Puree kentang + wortel + kuning telur"],
+                    ["Bubur beras + daging sapi giling halus + brokoli", "Puree labu kuning + tahu + 1 sdt minyak"],
+                    ["Bubur beras + ikan gabus/kakap halus + bayam", "Puree ubi + ayam suwir halus + minyak"],
+                    ["Bubur beras + telur utuh matang + wortel", "Puree kentang + daging sapi + buncis"],
+                    ["Bubur beras + ikan kembung halus + labu siam", "Bubur beras + tempe + bayam + minyak"],
+                    ["Bubur beras + hati ayam + tomat", "Puree ubi + ikan + brokoli"],
+                    ["Bubur beras + tahu + ayam + wortel", "Bubur beras + daging sapi + labu kuning"]
+                ]
+            },
+            "7-8": {
+                age: "7-8 Bulan", texture: "Cincang halus / Lumat",
+                desc: "1/2 mangkuk 250ml, 3x sehari + 1x snack.",
+                labels: ["Pagi", "Siang", "Malam", "Snack"],
+                menu: [
+                    ["Bubur nasi + telur orak-arik + bayam", "Nasi tim + hati ayam + wortel", "Nasi tim + ikan kembung + labu kuning", "Pisang lumat"],
+                    ["Bubur nasi + ayam cincang + brokoli", "Nasi tim + daging sapi + kentang + buncis", "Bubur nasi + tahu + telur + sawi", "Puree alpukat"],
+                    ["Nasi tim + ikan gabus + bayam", "Nasi tim + hati sapi + wortel", "Bubur nasi + tempe + labu siam", "Puree pepaya"],
+                    ["Bubur nasi + telur + tomat", "Nasi tim + ayam + kentang + brokoli", "Nasi tim + ikan kakap + wortel", "Puree pir"],
+                    ["Bubur nasi + daging sapi + labu kuning", "Nasi tim + tahu + ayam + bayam", "Bubur nasi + hati ayam + buncis", "Pisang lumat + yogurt plain"],
+                    ["Nasi tim + telur + sawi + wortel", "Nasi tim + ikan salmon + brokoli", "Nasi tim + daging sapi + kentang", "Puree alpukat"],
+                    ["Bubur nasi + ayam + labu siam", "Nasi tim + ikan kembung + bayam", "Nasi tim + tempe + telur + wortel", "Puree apel kukus"]
+                ]
+            },
+            "9-11": {
+                age: "9-11 Bulan", texture: "Cincang kasar / Finger food",
+                desc: "3/4 mangkuk 250ml, 3-4x sehari + snack.",
+                labels: ["Pagi", "Siang", "Malam", "Snack"],
+                menu: [
+                    ["Nasi lembek + telur dadar cincang + bayam", "Nasi tim kasar + ayam + wortel + buncis", "Nasi + ikan kembung + labu kuning", "Finger food: potongan pisang"],
+                    ["Nasi lembek + daging sapi cincang + brokoli", "Nasi + hati ayam + kentang", "Nasi + tahu + telur + sawi", "Finger food: stik alpukat"],
+                    ["Nasi + ikan gabus + bayam", "Nasi + ayam + labu siam + tempe", "Nasi tim + daging sapi + wortel", "Finger food: kentang kukus"],
+                    ["Nasi + telur rebus cincang + tomat", "Nasi + ikan kakap + brokoli", "Nasi + ayam + kentang + buncis", "Finger food: pepaya potong"],
+                    ["Nasi + perkedel ayam/tahu + wortel", "Nasi + hati sapi + bayam", "Nasi + ikan salmon + labu kuning", "Finger food: stik ubi kukus"],
+                    ["Nasi + telur orak-arik + sawi", "Nasi + daging sapi + kentang + wortel", "Nasi + tempe + ayam + brokoli", "Finger food: potongan pir"],
+                    ["Nasi + ayam + labu siam", "Nasi + ikan kembung + bayam", "Nasi + tahu + telur + wortel", "Finger food: omelet mini"]
+                ]
+            },
+            "12": {
+                age: "12+ Bulan", texture: "Makanan keluarga",
+                desc: "Mangkuk penuh, 3-4x sehari + snack. Bumbu tetap sederhana, minim garam dan gula.",
+                labels: ["Pagi", "Siang", "Malam", "Snack"],
+                menu: [
+                    ["Nasi + telur dadar + sayur bening", "Nasi + ayam goreng/tim + tumis wortel buncis", "Nasi + ikan kembung bakar + sup sayur", "Buah potong + yogurt"],
+                    ["Bubur ayam sederhana (tanpa kecap asin)", "Nasi + daging sapi + tumis brokoli", "Nasi + tahu tempe + sayur bayam", "Pisang"],
+                    ["Nasi + telur orak-arik + tomat", "Nasi + ikan gabus + sup labu siam", "Nasi + ayam suwir + tumis sawi", "Puding susu"],
+                    ["Roti + telur + alpukat", "Nasi + hati ayam + sayur lodeh", "Nasi + ikan salmon + tumis buncis", "Pepaya"],
+                    ["Nasi + perkedel + sup", "Nasi + daging cincang + tumis kangkung", "Nasi + tempe + telur + sayur", "Ubi kukus"],
+                    ["Nasi goreng sayur + telur", "Nasi + ikan kakap + sup wortel", "Nasi + ayam + tumis brokoli", "Buah pir"],
+                    ["Nasi + omelet sayur", "Nasi + sapi lada hitam ringan + sayur bening", "Nasi + tahu ayam + sup jagung", "Yogurt + buah"]
+                ]
+            }
+        };
+
+        let appState = {
+            profile: JSON.parse(localStorage.getItem('kia_profile')) || DEFAULT_CHILD,
+            growth: JSON.parse(localStorage.getItem('kia_growth')) || [],
+            milestones: JSON.parse(localStorage.getItem('kia_milestones')) || {},
+            vaccines: JSON.parse(localStorage.getItem('kia_vaccines')) || {},
+            words: JSON.parse(localStorage.getItem('kia_words')) || [],
+            notes: (function(){
+                const val = localStorage.getItem('kia_notes');
+                try {
+                    const parsed = JSON.parse(val);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch(e) { return []; }
+            })()
+        };
+
+        let currentMilestoneTab = '0-3';
+        let currentMpasiTab = null;
+
+        function getAgeInMonths() {
+            const dob = new Date(appState.profile.dob);
+            const now = new Date();
+            let months = (now.getFullYear() - dob.getFullYear()) * 12 + (now.getMonth() - dob.getMonth());
+            if (now.getDate() < dob.getDate()) months--;
+            return months;
+        }
+
+        function defaultMpasiTab() {
+            const m = getAgeInMonths();
+            if (m >= 12) return '12';
+            if (m >= 9) return '9-11';
+            if (m >= 7) return '7-8';
+            return '6';
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            document.getElementById('inputDateKMS').valueAsDate = new Date();
+            document.getElementById('inputWordDate').valueAsDate = new Date();
+
+            currentMpasiTab = defaultMpasiTab();
+
+            applyTheme();
+            updateProfileView();
+            renderGrowth();
+            renderMilestones();
+            renderVaccines();
+            renderMPASI();
+            renderWords();
+            renderJurnals();
+
+            document.getElementById('profName').value = appState.profile.name;
+            document.getElementById('profDOB').value = appState.profile.dob;
+            document.getElementById('profGender').value = appState.profile.gender;
+        };
+
+        // --- UTILS ---
+        function showToast(msg) {
+            const t = document.getElementById('toastMessage');
+            t.innerText = msg;
+            t.classList.remove('opacity-0', 'pointer-events-none');
+            t.classList.add('opacity-100');
+            setTimeout(() => {
+                t.classList.remove('opacity-100');
+                t.classList.add('opacity-0', 'pointer-events-none');
+            }, 2000);
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        // --- THEME & TABS ---
+        function applyTheme() {
+            const isGirl = appState.profile.gender === 'Perempuan';
+            const bgClass = isGirl ? 'bg-rose-500' : 'bg-indigo-500';
+            const textClass = isGirl ? 'text-rose-500' : 'text-indigo-500';
+            const ringClass = isGirl ? 'focus:ring-rose-400' : 'focus:ring-indigo-400';
+            const lightBgClass = isGirl ? 'bg-rose-50' : 'bg-indigo-50';
+
+            document.getElementById('appHeader').className = `${bgClass} text-white p-6 rounded-b-3xl shadow-md transition-colors duration-300`;
+            document.getElementById('genderIconContainer').className = `bg-white p-3 rounded-full shadow-sm ${textClass}`;
+            document.getElementById('genderIcon').setAttribute('data-lucide', isGirl ? 'flower-2' : 'rocket');
+
+            document.querySelectorAll('.theme-bg').forEach(el => {
+                el.classList.remove('bg-rose-500', 'bg-indigo-500');
+                el.classList.add(bgClass);
+            });
+            document.querySelectorAll('.theme-text').forEach(el => {
+                el.classList.remove('text-rose-500', 'text-indigo-500');
+                el.classList.add(textClass);
+            });
+            document.querySelectorAll('.theme-ring').forEach(el => {
+                el.classList.remove('focus:ring-rose-400', 'focus:ring-indigo-400');
+                el.classList.add(ringClass);
+            });
+            document.querySelectorAll('.theme-light-bg').forEach(el => {
+                el.classList.remove('bg-rose-50', 'bg-indigo-50');
+                el.classList.add(lightBgClass);
+            });
+
+            lucide.createIcons();
+            updateActiveTabStyling();
+        }
+
+        let currentTabId = 'kms';
+        function switchTab(tabId) {
+            currentTabId = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            updateActiveTabStyling();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateActiveTabStyling() {
+            const isGirl = appState.profile.gender === 'Perempuan';
+            const textActive = isGirl ? 'text-rose-500' : 'text-indigo-500';
+
+            ['profil','kms', 'milestone', 'vaksin', 'mpasi', 'kata', 'catatan'].forEach(id => {
+                const btn = document.getElementById(`nav-${id}`);
+                const span = btn.querySelector('span');
+                if (id === currentTabId) {
+                    btn.className = `nav-btn flex flex-col items-center min-w-[60px] snap-center ${textActive}`;
+                    span.className = "text-[10px] font-semibold";
+                } else {
+                    btn.className = "nav-btn flex flex-col items-center min-w-[60px] snap-center text-slate-400";
+                    span.className = "text-[10px] font-medium";
+                }
+            });
+        }
+
+        // --- 1. PROFIL ---
+        function updateProfileView() {
+            document.getElementById('childNameHeader').innerText = appState.profile.name;
+            const months = getAgeInMonths();
+            const years = Math.floor(months / 12);
+            const remMonths = months % 12;
+
+            let ageStr = months >= 12 ? `${years} Thn ${remMonths} Bln` : `${Math.max(0, months)} Bulan`;
+            document.getElementById('childAgeDisplay').innerText = ageStr;
+        }
+
+        function saveProfile(e) {
+            e.preventDefault();
+            appState.profile.name = document.getElementById('profName').value;
+            appState.profile.dob = document.getElementById('profDOB').value;
+            appState.profile.gender = document.getElementById('profGender').value;
+            localStorage.setItem('kia_profile', JSON.stringify(appState.profile));
+            currentMpasiTab = defaultMpasiTab();
+            updateProfileView();
+            applyTheme();
+            renderGrowth();
+            renderMilestones();
+            renderVaccines();
+            renderMPASI();
+            showToast('Profil disimpan!');
+            switchTab('kms');
+        }
+
+        // --- 2. KMS ---
+        function evaluateGrowth(bb, ageMonths, gender) {
+            if(ageMonths < 0) return "Cukup";
+            let min, max;
+            if(ageMonths <= 6) { min = 3; max = 8; }
+            else if(ageMonths <= 12) { min = 7; max = 11.5; }
+            else if(ageMonths <= 24) { min = 9; max = 14.5; }
+            else { min = 11; max = 20; }
+
+            if(bb < min) return "Kurang";
+            if(bb > max) return "Berlebih";
+            return "Cukup";
+        }
+
+        function saveGrowthRecord(e) {
+            e.preventDefault();
+            const date = document.getElementById('inputDateKMS').value;
+            const bb = parseFloat(document.getElementById('inputBB').value);
+            const tb = parseFloat(document.getElementById('inputTB').value);
+
+            const dob = new Date(appState.profile.dob);
+            const recDate = new Date(date);
+            let months = (recDate.getFullYear() - dob.getFullYear()) * 12 + (recDate.getMonth() - dob.getMonth());
+
+            const evalResult = evaluateGrowth(bb, months, appState.profile.gender);
+
+            appState.growth.unshift({ id: Date.now(), date, bb, tb, eval: evalResult });
+            appState.growth.sort((a,b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('kia_growth', JSON.stringify(appState.growth));
+
+            document.getElementById('inputBB').value = '';
+            document.getElementById('inputTB').value = '';
+            renderGrowth();
+            showToast('Pengukuran disimpan!');
+        }
+
+        function renderGrowth() {
+            const container = document.getElementById('growthListContainer');
+            container.innerHTML = '';
+            if(appState.growth.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Belum ada data.</p>';
+                return;
+            }
+
+            appState.growth.forEach(g => {
+                let evalColor = g.eval === 'Cukup' ? 'text-emerald-600 bg-emerald-50' :
+                               (g.eval === 'Kurang' ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50');
+
+                container.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-slate-50">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-700">${formatDate(g.date)}</p>
+                            <p class="text-xs text-slate-500 mt-0.5">BB: ${g.bb}kg | TB: ${g.tb}cm</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-md ${evalColor}">${g.eval}</span>
+                            <button onclick="deleteGrowth(${g.id})" class="text-slate-400 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function deleteGrowth(id) {
+            appState.growth = appState.growth.filter(g => g.id !== id);
+            localStorage.setItem('kia_growth', JSON.stringify(appState.growth));
+            renderGrowth();
+        }
+
+        // --- 3. MILESTONE ---
+        function switchMilestoneTab(ageGroup) {
+            currentMilestoneTab = ageGroup;
+            const isGirl = appState.profile.gender === 'Perempuan';
+            const activeBg = isGirl ? 'bg-rose-500 text-white border-rose-500' : 'bg-indigo-500 text-white border-indigo-500';
+
+            document.querySelectorAll('.ms-tab-btn').forEach(btn => {
+                btn.className = "ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600 transition-colors";
+            });
+            const activeBtn = document.getElementById(`btn-ms-${ageGroup}`);
+            activeBtn.className = `ms-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${activeBg}`;
+
+            renderMilestoneContent(ageGroup);
+        }
+
+        function renderMilestones() {
+            switchMilestoneTab(currentMilestoneTab);
+        }
+
+        function renderMilestoneContent(ageGroup) {
+            const container = document.getElementById('milestoneContentContainer');
+            const data = MILESTONES_DATA[ageGroup];
+            const savedState = appState.milestones[ageGroup] || {};
+
+            const isGirl = appState.profile.gender === 'Perempuan';
+            const accentClass = isGirl ? 'accent-rose-500' : 'accent-indigo-500';
+
+            container.innerHTML = data.map(item => `
+                <label class="flex items-start space-x-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" class="mt-0.5 w-4 h-4 ${accentClass}"
+                           ${savedState[item.id] ? 'checked' : ''}
+                           onchange="toggleMilestone('${ageGroup}', '${item.id}', this.checked)">
+                    <span class="text-sm text-slate-700 ${savedState[item.id] ? 'line-through opacity-60' : ''}">${item.text}</span>
+                </label>
+            `).join('');
+        }
+
+        function toggleMilestone(ageGroup, id, isChecked) {
+            if(!appState.milestones[ageGroup]) appState.milestones[ageGroup] = {};
+            appState.milestones[ageGroup][id] = isChecked;
+            localStorage.setItem('kia_milestones', JSON.stringify(appState.milestones));
+            renderMilestoneContent(ageGroup);
+        }
+
+        // --- 4. VAKSIN ---
+        function renderVaccines() {
+            const wContainer = document.getElementById('vaccineWajibContainer');
+            const tContainer = document.getElementById('vaccineTambahanContainer');
+
+            const isGirl = appState.profile.gender === 'Perempuan';
+            const accentClass = isGirl ? 'accent-rose-500' : 'accent-indigo-500';
+
+            const buildHTML = (data) => data.map(v => {
+                const state = appState.vaccines[v.id] || { status: false, date: '' };
+                return `
+                    <div class="p-3 border border-slate-200 rounded-xl ${state.status ? 'bg-slate-50' : 'bg-white'}">
+                        <div class="flex items-start justify-between mb-2">
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">${v.age}</span>
+                                <p class="text-sm font-semibold text-slate-800 mt-1 ${state.status ? 'line-through opacity-70' : ''}">${v.name}</p>
+                            </div>
+                            <input type="checkbox" class="w-5 h-5 ${accentClass}" ${state.status ? 'checked' : ''} onchange="toggleVaccineStatus('${v.id}', this.checked)">
+                        </div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <label class="text-[10px] text-slate-500">Tgl Pemberian:</label>
+                            <input type="date" value="${state.date || ''}" onchange="updateVaccineDate('${v.id}', this.value)" class="text-xs border border-slate-200 rounded px-2 py-1 outline-none">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            wContainer.innerHTML = buildHTML(VAKSIN_WAJIB_DATA);
+            tContainer.innerHTML = buildHTML(VAKSIN_TAMBAHAN_DATA);
+        }
+
+        function toggleVaccineStatus(id, checked) {
+            if(!appState.vaccines[id]) appState.vaccines[id] = { date: '' };
+            appState.vaccines[id].status = checked;
+            if(checked && !appState.vaccines[id].date) {
+                appState.vaccines[id].date = new Date().toISOString().split('T')[0];
+            }
+            localStorage.setItem('kia_vaccines', JSON.stringify(appState.vaccines));
+            renderVaccines();
+        }
+
+        function updateVaccineDate(id, dateVal) {
+            if(!appState.vaccines[id]) appState.vaccines[id] = { status: false };
+            appState.vaccines[id].date = dateVal;
+            localStorage.setItem('kia_vaccines', JSON.stringify(appState.vaccines));
+        }
+
+        // --- 5. MPASI ---
+        function switchMpasiTab(key) {
+            currentMpasiTab = key;
+            renderMPASI();
+        }
+
+        function renderMPASI() {
+            if(!currentMpasiTab) currentMpasiTab = defaultMpasiTab();
+            const isGirl = appState.profile.gender === 'Perempuan';
+            const activeBg = isGirl ? 'bg-rose-500 text-white border-rose-500' : 'bg-indigo-500 text-white border-indigo-500';
+
+            document.querySelectorAll('.mp-tab-btn').forEach(btn => {
+                btn.className = "mp-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-white border border-slate-200 text-slate-600 transition-colors";
+            });
+            document.getElementById(`btn-mp-${currentMpasiTab}`).className =
+                `mp-tab-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${activeBg}`;
+
+            const d = MPASI_DATA[currentMpasiTab];
+            const container = document.getElementById('mpasiCardsContainer');
+
+            const dayCards = d.menu.map((meals, i) => `
+                <div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
+                    <p class="text-xs font-bold text-slate-800 mb-2">Hari ${i + 1}</p>
+                    <div class="space-y-1.5">
+                        ${meals.map((m, j) => `
+                            <div class="flex gap-2 text-xs">
+                                <span class="w-14 shrink-0 font-semibold text-amber-600">${d.labels[j]}</span>
+                                <span class="text-slate-600">${m}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex items-start gap-4">
+                    <div class="bg-amber-100 text-amber-600 p-2 rounded-lg">
+                        <i data-lucide="utensils-crossed" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-800">${d.age}</h4>
+                        <p class="text-xs font-semibold text-amber-600 mt-0.5">${d.texture}</p>
+                        <p class="text-xs text-slate-600 mt-1">${d.desc}</p>
+                    </div>
+                </div>
+
+                <h4 class="text-sm font-bold text-slate-800 pt-1">Contoh Menu 7 Hari</h4>
+                ${dayCards}
+
+                <p class="text-[10px] text-slate-400 leading-relaxed">
+                    Menu hanyalah contoh dan dapat disesuaikan. Perkenalkan makanan baru satu per satu (tunggu 2-3 hari untuk memantau alergi).
+                    Jangan beri madu sebelum 1 tahun. Konsultasikan dengan dokter anak / tenaga kesehatan bila ada alergi atau masalah makan.
+                </p>
+            `;
+            lucide.createIcons();
+        }
+
+        // --- 6. LIST KATA ---
+        function saveWord(e) {
+            e.preventDefault();
+            const word = document.getElementById('inputWord').value;
+            const date = document.getElementById('inputWordDate').value;
+
+            appState.words.unshift({ id: Date.now(), word, date });
+            localStorage.setItem('kia_words', JSON.stringify(appState.words));
+
+            document.getElementById('inputWord').value = '';
+            renderWords();
+            showToast('Kata tersimpan!');
+        }
+
+        function renderWords() {
+            const container = document.getElementById('wordListContainer');
+            if(appState.words.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Belum ada kata dicatat.</p>';
+                return;
+            }
+            container.innerHTML = appState.words.map(w => `
+                <div class="flex justify-between items-center p-2.5 bg-slate-50 border border-slate-100 rounded-lg">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-800">"${w.word}"</p>
+                        <p class="text-[10px] text-slate-500">${formatDate(w.date)}</p>
+                    </div>
+                    <button onclick="deleteWord(${w.id})" class="text-slate-400 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function deleteWord(id) {
+            appState.words = appState.words.filter(w => w.id !== id);
+            localStorage.setItem('kia_words', JSON.stringify(appState.words));
+            renderWords();
+        }
+
+        // --- 7. CATATAN IBU (NOTES/JURNAL) ---
+        function renderJurnals() {
+            const container = document.getElementById('jurnalListContainer');
+            if(appState.notes.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10">
+                        <i data-lucide="book-open" class="w-12 h-12 text-slate-200 mx-auto mb-2"></i>
+                        <p class="text-xs text-slate-400">Belum ada jurnal ditulis.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = appState.notes.sort((a,b) => b.id - a.id).map(n => `
+                <div onclick="viewJurnal(${n.id})" class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm cursor-pointer hover:bg-slate-50 transition active:scale-[0.98]">
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="font-bold text-slate-800 text-sm truncate pr-3">${n.title || 'Tanpa Judul'}</h4>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap">${formatDate(n.date)}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 line-clamp-2">${n.content}</p>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function showAddNoteForm() {
+            document.getElementById('jurnalListView').classList.add('hidden');
+            document.getElementById('jurnalDetailView').classList.add('hidden');
+
+            const formView = document.getElementById('jurnalFormView');
+            formView.classList.remove('hidden');
+            formView.classList.add('flex');
+
+            document.getElementById('jurnalTitle').value = '';
+            document.getElementById('jurnalContent').value = '';
+        }
+
+        function backToNotesList() {
+            document.getElementById('jurnalFormView').classList.add('hidden');
+            document.getElementById('jurnalFormView').classList.remove('flex');
+
+            document.getElementById('jurnalDetailView').classList.add('hidden');
+            document.getElementById('jurnalDetailView').classList.remove('flex');
+
+            document.getElementById('jurnalListView').classList.remove('hidden');
+            renderJurnals();
+        }
+
+        function saveJurnal() {
+            const title = document.getElementById('jurnalTitle').value.trim();
+            const content = document.getElementById('jurnalContent').value.trim();
+            if(!title && !content) {
+                return showToast('Isi catatan tidak boleh kosong!');
+            }
+
+            const newNote = {
+                id: Date.now(),
+                title: title || 'Tanpa Judul',
+                content: content,
+                date: new Date().toISOString()
+            };
+
+            appState.notes.push(newNote);
+            localStorage.setItem('kia_notes', JSON.stringify(appState.notes));
+            showToast('Jurnal tersimpan!');
+            backToNotesList();
+        }
+
+        function viewJurnal(id) {
+            const note = appState.notes.find(n => n.id === id);
+            if(!note) return;
+
+            document.getElementById('jurnalListView').classList.add('hidden');
+
+            const detailView = document.getElementById('jurnalDetailView');
+            detailView.classList.remove('hidden');
+            detailView.classList.add('flex');
+
+            document.getElementById('jurnalDetailTitle').innerText = note.title;
+            document.getElementById('jurnalDetailDate').innerText = formatDate(note.date);
+            document.getElementById('jurnalDetailContent').innerText = note.content;
+
+            document.getElementById('jurnalDetailDeleteBtn').onclick = () => {
+                if(confirm('Yakin ingin menghapus jurnal ini?')) {
+                    deleteJurnal(id);
+                }
+            };
+        }
+
+        function deleteJurnal(id) {
+            appState.notes = appState.notes.filter(n => n.id !== id);
+            localStorage.setItem('kia_notes', JSON.stringify(appState.notes));
+            showToast('Jurnal dihapus!');
+            backToNotesList();
+        }
+
+        // --- PWA: service worker (offline) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>
